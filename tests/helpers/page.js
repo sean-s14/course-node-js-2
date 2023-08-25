@@ -8,7 +8,7 @@ class CustomPage {
       headless: false,
     });
     const page = await browser.newPage();
-    const customPage = new CustomPage(page);
+    const customPage = new CustomPage(page, browser);
 
     return new Proxy(customPage, {
       get: function (target, property) {
@@ -17,8 +17,9 @@ class CustomPage {
     });
   }
 
-  constructor(page) {
+  constructor(page, browser) {
     this.page = page;
+    this.browser = browser;
   }
 
   async login() {
@@ -36,10 +37,13 @@ class CustomPage {
   }
 
   async close() {
+    // Cleanup user and blogs
     if (this.user) {
+      await userFactory.deleteUserBlogs(this.user);
       await userFactory.deleteUser(this.user);
+      this.user = null;
     }
-    await this.page.close();
+    return await this.browser.close();
   }
 }
 
